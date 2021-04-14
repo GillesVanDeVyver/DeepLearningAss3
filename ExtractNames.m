@@ -9,6 +9,7 @@ if length(names{end}) < 1
 end
 ys = zeros(length(names), 1);
 all_names = cell(1, length(names));
+%max_len=0;
 for i=1:length(names)
     nn = strsplit(names{i}, ' ');
     l = str2num(nn{end});
@@ -18,6 +19,10 @@ for i=1:length(names)
         name = nn{1};
     end
     name = lower(name);
+  %  if strlength(name)>max_len
+  %      max_len=strlength(name)
+  %      name
+  %  end   
     ys(i) = l;
     all_names{i} = name;
 end
