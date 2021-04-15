@@ -12,4 +12,3 @@ ConvNet.F{1} = randn(d, k1, n1)*sig1;
 ConvNet.F{2} = randn(n1, k2, n2)*sig2;
 fsize=n2*n_len2;
 ConvNet.W = randn(K, fsize)*sig3;
-
