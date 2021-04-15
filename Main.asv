@@ -1,0 +1,25 @@
+ExtractNames();
+C = unique(cell2mat(all_names));
+d = numel(C);
+n_len = 19;
+nb_classes = 18;
+nb_names = size(all_names,2);
+char_to_ind = CreateCharToInd(d,C);
+flat_size=d*n_len;
+[trainX,trainY,validationX,validationY] = LoadData(all_names,char_to_ind,n_len,d,nb_names,ys,flat_size);
+
+
+hyper_paras = struct('n1',3,'k1',3,'n2',3,'k2', 3, 'eta',0.001,'rho',0.9);
+title = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
+            ',n2=',string(hyper_paras.n2),',ns=',string(hyper_paras.n_s),...
+            ',lambda=',string(hyper_paras.lambda),',nbcycles=',string(hyper_paras.nb_cycles),...
+            ',m=',string(hyper_paras.m));
+n1=1;
+k1=1;
+n2=1;
+k2=1;
+eta=0.001;
+rho=0.9;
+Convnet = InitParas(n1,k1,n2,k2,n_len)
+
+
