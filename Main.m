@@ -13,20 +13,25 @@ nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
 flat_size=d*nlen;
 [trainX,trainY,validationX,validationY] = LoadData(all_names,char_to_ind,nlen,d,nb_names,ys,flat_size);
+ys = double(permute(ys==1:K,[2,1]));
+
 trainx = reshape(trainX,d*nlen,[]);
+
+X_batch=trainX(:,:,1:5); % test with 5 examples
+x_batch=trainx(:,1:5);
+Ys_batch=ys(1:5);
+ys_batch=ys(:,1:5);
+
+
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
-MF1 = MakeMFMatrix(ConvNet.F{1}, nlen);
-x1=MF1*trainx;
-MF2 = MakeMFMatrix(ConvNet.F{2}, nlen1);
+MFs={MakeMFMatrix(ConvNet.F{1}, nlen),MakeMFMatrix(ConvNet.F{2}, nlen1)};
 [d, k, nf] = size(ConvNet.F{1});
 
-X_batch=trainX(:,:,1);
-x_batch=trainx(:,1);
 
 
-[x_batch_1,x_batch_2,P_batch] = ForwardPass(x_batch,MF1,MF2,ConvNet.W);
+[x_batch_1,x_batch_2,P_batch] = ForwardPass(x_batch,MFs,ConvNet.W);
 
-
+loss = ComputeLoss(x_batch, ys_batch, MFs, ConvNet.W)
 
 
 
