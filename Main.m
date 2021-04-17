@@ -1,3 +1,4 @@
+rng(400);
 hyper_paras = struct('n1',4,'k1',5,'n2',3,'k2', 3, 'eta',0.001,'rho',0.9);
 title = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
             ',n2=',string(hyper_paras.n2),',n2=',string(hyper_paras.n2),...
@@ -6,65 +7,76 @@ title = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
 ExtractNames();
 C = unique(cell2mat(all_names));
 d = numel(C);
-nlen = 19;
-nlen1=nlen-hyper_paras.k1+1;
+nlen={19,19-hyper_paras.k1+1,0};
+nlen{3} = nlen{2} - hyper_paras.k2 + 1
 K = 18;
 nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
-flat_size=d*nlen;
-[trainX,trainY,validationX,validationY] = LoadData(all_names,char_to_ind,nlen,d,nb_names,ys,flat_size);
-ys = double(permute(ys==1:K,[2,1]));
+flat_size=d*nlen{1};
+[trainX,trainY,validationX,validationY] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys,flat_size);
+Ys = double(permute(ys==1:K,[2,1]));
 
-trainx = reshape(trainX,d*nlen,[]);
+trainx = reshape(trainX,d*nlen{1},[]);
 
-X_batch=trainX(:,:,1:5); % test with 5 examples
-x_batch=trainx(:,1:5);
-Ys_batch=ys(1:5);
-ys_batch=ys(:,1:5);
+nb_examples = 5;
 
+X_batch={trainX(:,:,1:nb_examples)};
+x_batch={trainx(:,1:nb_examples)};
+Ys_batch=Ys(:,1:nb_examples);
+whos Ys
+whos Ys_batch
+whos ys
+ys_batch=ys(1:nb_examples);
 
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
-MFs={MakeMFMatrix(ConvNet.F{1}, nlen),MakeMFMatrix(ConvNet.F{2}, nlen1)};
+MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
+[x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet.W);
+
+X_batch{2}=reshape(x_batch{2},hyper_paras.n1,nlen{2},nb_examples);
+X_batch{3}=reshape(x_batch{3},hyper_paras.n2,nlen{3},nb_examples);
+X_batch1 = X_batch{1};
+whos X_batch1
+
+MXs = {MakeMXMatrix(X_batch{1},d, hyper_paras.k1, hyper_paras.n1,nlen{1}),...
+       MakeMXMatrix(X_batch{2},hyper_paras.n1, hyper_paras.k2, hyper_paras.n2,nlen{2})};
+temp = X_batch{1};
+whos temp;
+loss = ComputeLoss(x_batch{1}, Ys_batch, ConvNet,nlen);
+[grad_W, grad_F] = ComputeGradients(X_batch,x_batch, Ys_batch, P_batch, ConvNet.W,...
+                                    MXs,MFs,d,hyper_paras.k1,hyper_paras.n1,...
+                                    hyper_paras.k2,hyper_paras.n2,nlen);
+
+% debug tests gradients
+h= 1e-6;
+eps=1e-3;
+Gs = NumericalGradient(x_batch{1}, Ys_batch, ConvNet, h,nlen);
+
+assert(testSame(grad_W,Gs{end}, eps));
+assert(testSame(grad_F{1},Gs{1}(:)', eps));
+assert(testSame(grad_F{2},Gs{2}(:)', eps));
+
+% debug tests making natrices
+MF=MakeMFMatrix(ConvNet.F{1}, nlen{1});
+
 [d, k, nf] = size(ConvNet.F{1});
-
-
-
-[x_batch_1,x_batch_2,P_batch] = ForwardPass(x_batch,MFs,ConvNet.W);
-
-loss = ComputeLoss(x_batch, ys_batch, MFs, ConvNet.W)
-
-
-
-
-
-
-
-
-
-
-
-%{
-% debug tests
-
-MF1 = MakeMFMatrix(ConvNet.F{1}, nlen);
-MF2 = MakeMFMatrix(ConvNet.F{2}, nlen);
-[d, k, nf] = size(ConvNet.F{1});
-X_input=trainX(:,:,1);
-x_input=trainx(:,1);
-MX = MakeMXMatrix(X_input, d, k, nf,nlen);
+X_input=trainX(:,:,5);
+x_input=trainx(:,5);
+MX = MakeMXMatrix(X_input,d, hyper_paras.k1, hyper_paras.n1,nlen{1});
 s1 = MX * ConvNet.F{1}(:);
-s2 = MF1 * x_input;
+s2 = MF * x_input;
 assert(isequal(s1,s2));
 load('DebugInfo.mat');
-MX = MakeMXMatrix(X_input, d, k, nf,nlen);
-MF1 = MakeMFMatrix(F, nlen);
+MX=MakeMXMatrix(X_input,d, hyper_paras.k1,hyper_paras.n1,nlen{1});
+MF=MakeMFMatrix(F, nlen{1});
+
 s1 = MX * F(:);
-s2 = MF1 * x_input;
+s2 = MF * x_input;
+
 assert(isequal(s1,s2));
 assert(isequal(s1,vecS));
-assert(isequal(reshape(s1,4,15),S))
+assert(isequal(reshape(s1,4,15),S));
 
-%}
+
 
 
 

@@ -1,4 +1,4 @@
-function Gs = NumericalGradient(X_inputs, Ys, ConvNet, h)
+function Gs = NumericalGradient(x_input, Ys, ConvNet, h,nlen)
 
 try_ConvNet = ConvNet;
 Gs = cell(length(ConvNet.F)+1, 1);
@@ -18,14 +18,13 @@ for l=1:length(ConvNet.F)
             F_try1 = F_try;
             F_try1(j) = F_try(j) - h;
             try_ConvNet.F{l}(:, :, i) = F_try1; 
-            
-            l1 = Compute_loss(X_inputs, Ys, try_ConvNet);
+            l1 = ComputeLoss(x_input, Ys, try_ConvNet,nlen);
             
             F_try2 = F_try;
             F_try2(j) = F_try(j) + h;            
             
             try_ConvNet.F{l}(:, :, i) = F_try2;
-            l2 = Compute_loss(X_inputs, Ys, try_ConvNet);            
+            l2 = ComputeLoss(x_input, Ys, try_ConvNet,nlen);            
             
             G(j) = (l2 - l1) / (2*h);
             try_ConvNet.F{l}(:, :, i) = F_try;
@@ -42,13 +41,13 @@ for j=1:numel(W_try)
     W_try1(j) = W_try(j) - h;
     try_ConvNet.W = W_try1; 
             
-    l1 = Compute_loss(X_inputs, Ys, try_ConvNet);
+    l1 = ComputeLoss(x_input, Ys, try_ConvNet,nlen);
             
     W_try2 = W_try;
     W_try2(j) = W_try(j) + h;            
             
     try_ConvNet.W = W_try2;
-    l2 = Compute_loss(X_inputs, Ys, try_ConvNet);            
+    l2 = ComputeLoss(x_input, Ys, try_ConvNet,nlen);            
             
     G(j) = (l2 - l1) / (2*h);
     try_ConvNet.W = W_try;
