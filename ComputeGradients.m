@@ -1,12 +1,9 @@
-function [grad_W, grad_F] = ComputeGradients(X_batch,x_batch, Ys_batch, P_batch, W,MXs,MFs,d,k1,n1,k2,n2,nlen)
+function [grad_W, grad_F] = ComputeGradients(X_batch,x_batch, Ys_batch, P_batch, W,MFs,d,k1,n1,k2,n2,nlen)
     grad_F={zeros(1,d*k1*n1),zeros(1,n1*k2*n2)};
     n = size(x_batch{3},2);
     G_batch = -(Ys_batch-P_batch);
     grad_W = 1/n*G_batch*x_batch{3}';
     G_batch = W'*G_batch;   
-    whos G_batch
-    X_batch3 = x_batch{3};
-    whos X_batch3
     G_batch = G_batch.*(x_batch{3} > 0);
     
     for j=1:n
