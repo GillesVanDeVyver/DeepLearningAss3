@@ -16,9 +16,9 @@ char_to_ind = CreateCharToInd(d,C);
 [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
 
-%ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
+ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
 
-
+%{
 
 Ys = double(permute(ys==1:K,[2,1]));
 
@@ -42,14 +42,20 @@ MXs = {MakeMXMatrix(X_batch{1},d, hyper_paras.k1, hyper_paras.n1,nlen{1}),...
        MakeMXMatrix(X_batch{2},hyper_paras.n1, hyper_paras.k2, hyper_paras.n2,nlen{2})};
 temp = X_batch{1};
 loss = ComputeLoss(x_batch{1}, Ys_batch, ConvNet,nlen);
-whos X_batch
+MX1s = cell(n,1);
+for j=1:n
+    xj= trainX(:,:,j);
+    MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
+end
 [grad_W, grad_F] = ComputeGradients(X_batch,x_batch, Ys_batch, P_batch, ConvNet.W,...
                                     MFs,d,hyper_paras.k1,hyper_paras.n1,...
-                                    hyper_paras.k2,hyper_paras.n2,nlen);
+                                    hyper_paras.k2,hyper_paras.n2,nlen,MX1s);
 
 ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
-                             
-                                
+                            
+%}
+
+
 %{
 % debug tests gradients
 h= 1e-6;

@@ -11,25 +11,30 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
     loss_valid = zeros(n_epochs+1,1);
     loss_train(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
     loss_valid(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+    
+    
+    % pre-compute MX matrices
+    MX1s = cell(n,1);
+    for j=1:n
+        xj= trainX(:,:,j);
+        MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
+    end    
     for i=1:n_epochs
         i
-        shuffleInds = randperm(n);
-        Xshuffle = trainX(:, :,shuffleInds);
-        xshuffle = reshape(Xshuffle,d*nlen{1},[]);
-        Yshuffle = trainY(:, shuffleInds);
+        trainx = reshape(trainX,d*nlen{1},[]);
         for j=1:n/n_batch
             j_start = (j-1)*n_batch + 1;
             j_end = j*n_batch;
-            X_batch={Xshuffle(:,:,j_start:j_end)};
-            x_batch={xshuffle(:,j_start:j_end)};
-            Y_batch=Yshuffle(:,j_start:j_end);
+            X_batch={trainX(:,:,j_start:j_end)};
+            x_batch={trainx(:,j_start:j_end)};
+            Y_batch=trainY(:,j_start:j_end);
             MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
             [x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet.W);
             X_batch{2}=reshape(x_batch{2},hyper_paras.n1,nlen{2},n_batch);
             X_batch{3}=reshape(x_batch{3},hyper_paras.n2,nlen{3},n_batch);
             [grad_W, grad_vecF] = ComputeGradients(X_batch,x_batch, Y_batch,...
                 P_batch, ConvNet.W,MFs,d,hyper_paras.k1,hyper_paras.n1,...
-                hyper_paras.k2,hyper_paras.n2,nlen);
+                hyper_paras.k2,hyper_paras.n2,nlen,MX1s);
             ConvNet.W = ConvNet.W - eta*grad_W;
             grad_F1 = reshape(grad_vecF{1}, [d, hyper_paras.k1, hyper_paras.n1]);
             grad_F2 = reshape(grad_vecF{2}, [hyper_paras.n1, hyper_paras.k2, hyper_paras.n2]);
