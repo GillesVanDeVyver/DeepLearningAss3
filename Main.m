@@ -1,7 +1,7 @@
 rng(400);
-hyper_paras = struct('n1',10,'k1',5,'n2',10,'k2', 3, 'eta',0.1,'rho',0.9,'n_batch',100,'n_epochs',100);
+hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.1,'rho',0.95,'n_batch',100,'n_epochs',120);
 plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
-            ',n2=',string(hyper_paras.n2),',n2=',string(hyper_paras.n2),...
+            ',n2=',string(hyper_paras.n2),...
             ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
             ',rho=',string(hyper_paras.rho),',n batch=',string(hyper_paras.n_batch),...
             ',n epochs=',string(hyper_paras.n_epochs)) 
@@ -9,15 +9,18 @@ ExtractNames();
 C = unique(cell2mat(all_names));
 d = numel(C);
 nlen={19,19-hyper_paras.k1+1,0};
-nlen{3} = nlen{2} - hyper_paras.k2 + 1
+nlen{3} = nlen{2} - hyper_paras.k2 + 1;
 K = 18;
 nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
 [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
 
-ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,1)
+ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,1);
 
+validationx = reshape(validationX,d*nlen{1},[]);
+confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
+writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
 %{
 
 Ys = double(permute(ys==1:K,[2,1]));
