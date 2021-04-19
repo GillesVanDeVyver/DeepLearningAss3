@@ -1,4 +1,4 @@
-function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
+function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,plot_bool)
     trainx = reshape(trainX,d*nlen{1},[]);
     trainY = double(permute(trainy==1:K,[2,1]));
     validationx = reshape(validationX,d*nlen{1},[]);
@@ -7,12 +7,19 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
     eta = hyper_paras.eta;
     n_epochs = hyper_paras.n_epochs;
     n = size(trainX,3);
-    loss_train = zeros(n_epochs+1,1);
-    loss_valid = zeros(n_epochs+1,1);
-    loss_train(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
-    loss_valid(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
-    
-    
+    if plot_bool
+        loss_train = zeros(n_epochs+1,1);
+        loss_valid = zeros(n_epochs+1,1);
+        acc_train = zeros(n_epochs+1,1);
+        acc_valid = zeros(n_epochs+1,1);
+        plot_info = {loss_train,loss_valid,acc_train,acc_valid};
+    else
+       plot_info=0; 
+    end
+    plot_info{1}(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
+    plot_info{2}(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+    plot_info{3}(1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+    plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
     % pre-compute MX matrices
     MX1s = cell(n,1);
     for j=1:n
@@ -21,13 +28,16 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
     end    
     for i=1:n_epochs
         i
-        trainx = reshape(trainX,d*nlen{1},[]);
+        shuffleInds = randperm(n);
+        Xshuffle = trainX(:,:, shuffleInds);
+        Yshuffle = trainY(:, shuffleInds);
+        xshuffle = reshape(Xshuffle,d*nlen{1},[]);
         for j=1:n/n_batch
             j_start = (j-1)*n_batch + 1;
             j_end = j*n_batch;
-            X_batch={trainX(:,:,j_start:j_end)};
-            x_batch={trainx(:,j_start:j_end)};
-            Y_batch=trainY(:,j_start:j_end);
+            X_batch={Xshuffle(:,:,j_start:j_end)};
+            x_batch={xshuffle(:,j_start:j_end)};
+            Y_batch=Yshuffle(:,j_start:j_end);
             MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
             [x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet.W);
             X_batch{2}=reshape(x_batch{2},hyper_paras.n1,nlen{2},n_batch);
@@ -42,21 +52,31 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
             ConvNet.F{1} = ConvNet.F{1} - eta*grad_F1;
             ConvNet.F{2} = ConvNet.F{2} - eta*grad_F2;
         end
-        eta = eta*.9;
-        loss_train(i+1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
-        loss_valid(i+1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+        eta = eta*hyper_paras.rho;
+        plot_info{1}(i+1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
+        plot_info{2}(i+1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+        plot_info{3}(i+1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+        plot_info{4}(i+1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
     end
-    loss_train
-    loss_valid
-    epochInds = 0:n_epochs;
-    figure
-    plot(epochInds,loss_train,epochInds,loss_valid)
-    xlabel('epoch') 
-    ylabel('loss')
-    legend({'training loss','validation loss'},'Location','northeast')
-    title(plotTitle)
-    axis tight
-    print -depsc loss_SVM_paras3
+    if plot_bool
+        x_axis = 0:n_epochs;
+        figure('Renderer', 'painters', 'Position', [10 10 1500 300])
+        tiledlayout(1,2)
+        nexttile
+        plot(x_axis,plot_info{1},x_axis,plot_info{2})
+        ylim([0 max(plot_info{2})+1])
+        xlabel('epoch') 
+        ylabel('loss')
+        legend({'training loss','validation loss'},'Location','northeast')
+        nexttile
+        plot(x_axis,plot_info{3},x_axis,plot_info{4})
+        ylim([0 max(plot_info{4})+1])
+        xlabel('epoch') 
+        ylabel('accuracy')
+        legend({'training accuracy','validation accuracy'},'Location','northeast')
+        sgtitle(plotTitle) 
+        saveas(1,strcat(strrep(plotTitle, '.', ','),'.png'))
+    end
 end
 
 

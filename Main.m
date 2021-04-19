@@ -1,10 +1,10 @@
 rng(400);
-hyper_paras = struct('n1',4,'k1',5,'n2',3,'k2', 3, 'eta',0.001,'rho',0.9,'n_batch',100,'n_epochs',10);
+hyper_paras = struct('n1',10,'k1',5,'n2',10,'k2', 3, 'eta',0.1,'rho',0.9,'n_batch',100,'n_epochs',100);
 plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
             ',n2=',string(hyper_paras.n2),',n2=',string(hyper_paras.n2),...
             ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
-            ',rho=',string(hyper_paras.rho),',n_batch=',string(hyper_paras.n_batch),...
-            ',n_epochs=',string(hyper_paras.n_epochs)) 
+            ',rho=',string(hyper_paras.rho),',n batch=',string(hyper_paras.n_batch),...
+            ',n epochs=',string(hyper_paras.n_epochs)) 
 ExtractNames();
 C = unique(cell2mat(all_names));
 d = numel(C);
@@ -16,7 +16,7 @@ char_to_ind = CreateCharToInd(d,C);
 [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
 
-ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
+ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,1)
 
 %{
 
