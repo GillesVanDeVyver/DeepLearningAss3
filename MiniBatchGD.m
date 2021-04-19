@@ -6,7 +6,7 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
     n_batch = hyper_paras.n_batch;
     eta = hyper_paras.eta;
     n_epochs = hyper_paras.n_epochs;
-    n = size(trainX,3);
+    n = size(trainX,3)
     if plot_bool
         loss_train = zeros(n_epochs+1,1);
         loss_valid = zeros(n_epochs+1,1);
@@ -22,17 +22,46 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
     plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
     % pre-compute MX matrices
     MX1s = cell(n,1);
+    class_starts=ones(K,1);
+    curr_class=1;
+    class_counts=zeros(K,1);
+    counter=0;
+    last_start=1;
     for j=1:n
+        if trainy(j)~= curr_class
+            class_counts(curr_class)=counter;
+            last_start = counter+last_start;
+            class_starts(curr_class+1)=last_start;
+            curr_class=curr_class+1
+            counter=0;
+        end
+        counter = counter+1;
         xj= trainX(:,:,j);
         MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
-    end    
+    end
+    class_counts(curr_class)=counter;
+    nb_samples = min(class_counts);
+    effective_n=nb_samples*K
     for i=1:n_epochs
+        effective_trainx=zeros(d*nlen{1},effective_n);
+        effective_trainX=zeros(d,nlen{1},effective_n);
+        effective_trainY=zeros(K,effective_n);
+        effective_trainMX1s=cell(effective_n,1);
+        for class =1:K
+            sample_inds = class_starts(class)-1+randsample(class_counts(class),nb_samples);
+            effective_trainx(:,(class-1)*nb_samples+1:(class-1)*nb_samples+nb_samples)=trainx(:,sample_inds);
+            effective_trainX(:,:,(class-1)*nb_samples+1:(class-1)*nb_samples+nb_samples)=trainX(:,:,sample_inds);
+            effective_trainY(:,(class-1)*nb_samples+1:(class-1)*nb_samples+nb_samples)=trainY(:,sample_inds);
+            for ind=1:nb_samples
+                effective_trainMX1s{ind+(class-1)*nb_samples}=MX1s{sample_inds(ind)};
+            end
+        end
         i
-        shuffleInds = randperm(n);
-        Xshuffle = trainX(:,:, shuffleInds);
-        Yshuffle = trainY(:, shuffleInds);
+        shuffleInds=randperm(nb_samples*K);
+        Xshuffle = effective_trainX(:,:, shuffleInds);
+        Yshuffle = effective_trainY(:, shuffleInds);
         xshuffle = reshape(Xshuffle,d*nlen{1},[]);
-        for j=1:n/n_batch
+        for j=1:effective_n/n_batch
             j_start = (j-1)*n_batch + 1;
             j_end = j*n_batch;
             X_batch={Xshuffle(:,:,j_start:j_end)};
@@ -44,7 +73,7 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
             X_batch{3}=reshape(x_batch{3},hyper_paras.n2,nlen{3},n_batch);
             [grad_W, grad_vecF] = ComputeGradients(X_batch,x_batch, Y_batch,...
                 P_batch, ConvNet.W,MFs,d,hyper_paras.k1,hyper_paras.n1,...
-                hyper_paras.k2,hyper_paras.n2,nlen,MX1s);
+                hyper_paras.k2,hyper_paras.n2,nlen,effective_trainMX1s);
             ConvNet.W = ConvNet.W - eta*grad_W;
             grad_F1 = reshape(grad_vecF{1}, [d, hyper_paras.k1, hyper_paras.n1]);
             grad_F2 = reshape(grad_vecF{2}, [hyper_paras.n1, hyper_paras.k2, hyper_paras.n2]);
@@ -70,7 +99,7 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
         legend({'training loss','validation loss'},'Location','northeast')
         nexttile
         plot(x_axis,plot_info{3},x_axis,plot_info{4})
-        ylim([0 max(plot_info{4})+1])
+        ylim([0 max(plot_info{4})+0.2])
         xlabel('epoch') 
         ylabel('accuracy')
         legend({'training accuracy','validation accuracy'},'Location','northeast')
