@@ -1,5 +1,6 @@
 rng(400);
-hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.1,'rho',0.99,'n_batch',20,'n_epochs',3000);
+
+hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',3500);
 plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
             ',n2=',string(hyper_paras.n2),...
             ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
@@ -9,54 +10,114 @@ ExtractNames();
 C = unique(cell2mat(all_names));
 d = numel(C);
 nlen={19,19-hyper_paras.k1+1,0};
-nlen{3} = nlen{2} - hyper_paras.k2 + 1;
+nlen{3} = nlen{2} - hyper_paras.k2 + 1
 K = 18;
 nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
 [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
-ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
 
-ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,1);
 
+% pre-compute MX matrices
+[MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY] = Preprocess(K,trainy,trainX,validationX,validationy,hyper_paras,nlen,d);
 validationx = reshape(validationX,d*nlen{1},[]);
-confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
-writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
-%{
+ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
+ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,...
+              ConvNet,nlen,d,K, plotTitle,0,MX1s,class_counts,class_starts,...
+              trainx,trainY,validationx,validationY);
+%confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
+%writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
 
-Ys = double(permute(ys==1:K,[2,1]));
 
-trainx = reshape(trainX,d*nlen{1},[]);
-
-nb_examples = 100;
-
-X_batch={trainX(:,:,1:nb_examples)};
-x_batch={trainx(:,1:nb_examples)};
-Ys_batch=Ys(:,1:nb_examples);
-ys_batch=ys(1:nb_examples);
 
 MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
-[x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet.W);
-
-X_batch{2}=reshape(x_batch{2},hyper_paras.n1,nlen{2},nb_examples);
-X_batch{3}=reshape(x_batch{3},hyper_paras.n2,nlen{3},nb_examples);
-X_batch1 = X_batch{1};
-
-MXs = {MakeMXMatrix(X_batch{1},d, hyper_paras.k1, hyper_paras.n1,nlen{1}),...
-       MakeMXMatrix(X_batch{2},hyper_paras.n1, hyper_paras.k2, hyper_paras.n2,nlen{2})};
-temp = X_batch{1};
-loss = ComputeLoss(x_batch{1}, Ys_batch, ConvNet,nlen);
-MX1s = cell(n,1);
-for j=1:n
-    xj= trainX(:,:,j);
-    MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
+names = {'van de vyver','de luca','bogacova','griffin','charlier','karl'};
+%languages: Dutch,Italian,Russian,English,French,German
+for i =1:size(names,2)
+    CreateNameResult(names{i},char_to_ind,nlen,d,MFs,ConvNet);
 end
-[grad_W, grad_F] = ComputeGradients(X_batch,x_batch, Ys_batch, P_batch, ConvNet.W,...
-                                    MFs,d,hyper_paras.k1,hyper_paras.n1,...
-                                    hyper_paras.k2,hyper_paras.n2,nlen,MX1s);
 
-ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle)
-                            
+
+%{
+hyper parameter search
+
+fileID = fopen('Results_vary_eta.txt','w');
+e_min=-1;
+e_max=0; %best eta eta=0.31623
+nb_uniform_tests = 10; 
+for i = 0:nb_uniform_tests 
+    l_exp = e_min + i*(e_max-e_min)/nb_uniform_tests;
+    hyper_paras.eta = 10^l_exp;
+        final_valid_acc = TrainAndPrint(hyper_paras,nlen,d,K,trainX,trainx,trainy,trainY,...
+            validationX,validationx,validationy,validationY,fileID,MX1s,class_counts,class_starts)
+end
+fclose(fileID);
 %}
+
+%{
+hyper parameter search
+
+fileID = fopen('Results_vary_rho.txt','w');
+rho_exp_min = -4.66;
+rho_exp_max = -2.66; 
+nb_uniform_tests = 30; 
+for i = 0:nb_uniform_tests 
+    rho_exp = rho_exp_min + i*(rho_exp_max-rho_exp_min)/nb_uniform_tests;
+    hyper_paras.rho = 1-10^rho_exp;
+        final_valid_acc = TrainAndPrint(hyper_paras,nlen,d,K,trainX,trainx,trainy,trainY,...
+            validationX,validationx,validationy,validationY,fileID,MX1s,class_counts,class_starts)
+end
+fclose(fileID);
+%}
+
+%{
+hyper parameter search
+
+fileID = fopen('Results_vary_n_batch.txt','w');
+n_batch_min = 50;
+n_batch_max = 250; 
+nb_uniform_tests = 40; 
+for i = 0:nb_uniform_tests 
+    hyper_paras.n_batch = n_batch_min + i*(n_batch_max-n_batch_min)/nb_uniform_tests;
+        final_valid_acc = TrainAndPrint(hyper_paras,nlen,d,K,trainX,trainx,trainy,trainY,...
+            validationX,validationx,validationy,validationY,fileID,MX1s,class_counts,class_starts)
+end
+fclose(fileID);
+%}
+
+%{
+hyper parameter search
+
+fileID = fopen('Results_unifrom_grid_search1.txt','w');
+l_min=-5;
+l_max=1;
+rho_exp_min = -5;
+rho_exp_max = -1; 
+n_batch_exp_min = 1.5;
+n_batch_exp_max = 2.5;
+nb_uniform_tests = 3; % total nb of tests 4*3*3 = 36
+for i = 0:nb_uniform_tests %eta
+    l_exp = l_min + i*(l_max-l_min)/nb_uniform_tests;
+    hyper_paras.eta = 10^l_exp;
+    i
+    for j = 1:nb_uniform_tests %n_batch 
+        n_batch_exp = n_batch_exp_min + j*(n_batch_exp_max-n_batch_exp_min)/nb_uniform_tests;
+        hyper_paras.n_batch = floor(10^n_batch_exp);
+        j
+
+        for l = 1:nb_uniform_tests %rho
+            rho_exp = rho_exp_min + l*(rho_exp_max-rho_exp_min)/nb_uniform_tests;
+            hyper_paras.rho = 1-10^rho_exp;
+            final_valid_acc = TrainAndPrint(hyper_paras,nlen,d,K,trainX,trainx,trainy,trainY,...
+                validationX,validationx,validationy,validationY,fileID,MX1s,class_counts,class_starts)
+        end
+    end
+end
+fclose(fileID);
+
+%}
+
+
+
 
 
 %{
@@ -89,9 +150,6 @@ s2 = MF * x_input;
 assert(isequal(s1,s2));
 assert(isequal(s1,vecS));
 assert(isequal(reshape(s1,4,15),S));
-
-
-
 %}
 
 

@@ -1,47 +1,27 @@
-function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,ConvNet,nlen,d,K, plotTitle,plot_bool)
-    trainx = reshape(trainX,d*nlen{1},[]);
-    trainY = double(permute(trainy==1:K,[2,1]));
-    validationx = reshape(validationX,d*nlen{1},[]);
-    validationY = double(permute(validationy==1:K,[2,1]));
+function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy,...
+                               hyper_paras,ConvNet,nlen,d,K, plotTitle,...
+                               plot_bool,MX1s,class_counts,class_starts,...
+                               trainx,trainY,validationx,validationY)
     n_batch = hyper_paras.n_batch;
     eta = hyper_paras.eta;
     n_epochs = hyper_paras.n_epochs;
-    n = size(trainX,3)
+    n = size(trainX,3);
     if plot_bool
         loss_train = zeros(n_epochs+1,1);
         loss_valid = zeros(n_epochs+1,1);
         acc_train = zeros(n_epochs+1,1);
         acc_valid = zeros(n_epochs+1,1);
         plot_info = {loss_train,loss_valid,acc_train,acc_valid};
+        plot_info{1}(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
+        plot_info{2}(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+        plot_info{3}(1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+        plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
     else
        plot_info=0; 
     end
-    plot_info{1}(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
-    plot_info{2}(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
-    plot_info{3}(1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
-    plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
-    % pre-compute MX matrices
-    MX1s = cell(n,1);
-    class_starts=ones(K,1);
-    curr_class=1;
-    class_counts=zeros(K,1);
-    counter=0;
-    last_start=1;
-    for j=1:n
-        if trainy(j)~= curr_class
-            class_counts(curr_class)=counter;
-            last_start = counter+last_start;
-            class_starts(curr_class+1)=last_start;
-            curr_class=curr_class+1
-            counter=0;
-        end
-        counter = counter+1;
-        xj= trainX(:,:,j);
-        MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
-    end
-    class_counts(curr_class)=counter;
+
     nb_samples = min(class_counts);
-    effective_n=nb_samples*K
+    effective_n=nb_samples*K;
     for i=1:n_epochs
         effective_trainx=zeros(d*nlen{1},effective_n);
         effective_trainX=zeros(d,nlen{1},effective_n);
@@ -56,7 +36,6 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
                 effective_trainMX1s{ind+(class-1)*nb_samples}=MX1s{sample_inds(ind)};
             end
         end
-        i
         shuffleInds=randperm(nb_samples*K);
         Xshuffle = effective_trainX(:,:, shuffleInds);
         Yshuffle = effective_trainY(:, shuffleInds);
@@ -82,10 +61,12 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
             ConvNet.F{2} = ConvNet.F{2} - eta*grad_F2;
         end
         eta = eta*hyper_paras.rho;
-        plot_info{1}(i+1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
-        plot_info{2}(i+1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
-        plot_info{3}(i+1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
-        plot_info{4}(i+1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
+        if plot_bool
+            plot_info{1}(i+1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
+            plot_info{2}(i+1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
+            plot_info{3}(i+1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+            plot_info{4}(i+1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
+        end
     end
     if plot_bool
         x_axis = 0:n_epochs;
@@ -99,7 +80,7 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_para
         legend({'training loss','validation loss'},'Location','northeast')
         nexttile
         plot(x_axis,plot_info{3},x_axis,plot_info{4})
-        ylim([0 max(plot_info{4})+0.2])
+        ylim([0 max(plot_info{3})+0.2])
         xlabel('epoch') 
         ylabel('accuracy')
         legend({'training accuracy','validation accuracy'},'Location','northeast')

@@ -1,0 +1,11 @@
+n1=20,k1=5,n2=20,k2=3,eta=0.31623,rho=0.99978,n batch=146,n epochs=1500 acc:0.30093 loss:2.4657
+n1=20,k1=5,n2=20,k2=3,eta=0.39811,rho=0.99978,n batch=146,n epochs=1500 acc:0.27778 loss:2.4244
+n1=20,k1=5,n2=20,k2=3,eta=0.50119,rho=0.99978,n batch=146,n epochs=1500 acc:0.26389 loss:2.7103
+n1=20,k1=5,n2=20,k2=3,eta=0.63096,rho=0.99978,n batch=146,n epochs=1500 acc:0.28704 loss:2.398
+n1=20,k1=5,n2=20,k2=3,eta=0.79433,rho=0.99978,n batch=146,n epochs=1500 acc:0.22685 loss:2.5058
+n1=20,k1=5,n2=20,k2=3,eta=1,rho=0.99978,n batch=146,n epochs=1500 acc:0.31019 loss:2.4824
+n1=20,k1=5,n2=20,k2=3,eta=1.2589,rho=0.99978,n batch=146,n epochs=1500 acc:0.24074 loss:3.047
+n1=20,k1=5,n2=20,k2=3,eta=1.5849,rho=0.99978,n batch=146,n epochs=1500 acc:0.19907 loss:3.0561
+n1=20,k1=5,n2=20,k2=3,eta=1.9953,rho=0.99978,n batch=146,n epochs=1500 acc:0.18519 loss:3.1374
+n1=20,k1=5,n2=20,k2=3,eta=2.5119,rho=0.99978,n batch=146,n epochs=1500 acc:0.19444 loss:3.0629
+n1=20,k1=5,n2=20,k2=3,eta=3.1623,rho=0.99978,n batch=146,n epochs=1500 acc:0.11111 loss:3.1384
