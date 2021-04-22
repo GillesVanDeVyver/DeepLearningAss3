@@ -12,7 +12,7 @@ function [MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY].
             class_counts(curr_class)=counter;
             last_start = counter+last_start;
             class_starts(curr_class+1)=last_start;
-            curr_class=curr_class+1
+            curr_class=curr_class+1;
             counter=0;
         end
         counter = counter+1;
@@ -22,8 +22,6 @@ function [MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY].
     class_counts(curr_class)=counter;
     
     trainx = reshape(trainX,d*nlen{1},[]);
-
-    whos trainy
     trainY = double(permute(trainy==1:K,[2,1]));
     validationx = reshape(validationX,d*nlen{1},[]);
     validationY = double(permute(validationy==1:K,[2,1]));

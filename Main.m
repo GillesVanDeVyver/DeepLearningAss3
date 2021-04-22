@@ -1,6 +1,6 @@
 rng(400);
 
-hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',5);
+hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',5,'n_epochs',5);
 plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
             ',n2=',string(hyper_paras.n2),...
             ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
@@ -15,7 +15,6 @@ K = 18;
 nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
 [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
-
 
 % pre-compute MX matrices
 [MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY] = Preprocess(K,trainy,trainX,validationX,validationy,hyper_paras,nlen,d);

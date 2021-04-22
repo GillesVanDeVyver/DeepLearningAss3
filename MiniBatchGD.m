@@ -47,18 +47,21 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy,...
             x_batch={xshuffle(:,j_start:j_end)};
             Y_batch=Yshuffle(:,j_start:j_end);
             MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
-            [x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet.W);
+            [x_batch,P_batch] = ForwardPass(x_batch{1},MFs,ConvNet);
             X_batch{2}=reshape(x_batch{2},hyper_paras.n1,nlen{2},n_batch);
             X_batch{3}=reshape(x_batch{3},hyper_paras.n2,nlen{3},n_batch);
-            [grad_W, grad_vecF] = ComputeGradients(X_batch,x_batch, Y_batch,...
+            [grad_W, grad_vecF,grad_b] = ComputeGradients(X_batch,x_batch, Y_batch,...
                 P_batch, ConvNet.W,MFs,d,hyper_paras.k1,hyper_paras.n1,...
-                hyper_paras.k2,hyper_paras.n2,nlen,effective_trainMX1s);
+                hyper_paras.k2,hyper_paras.n2,nlen,effective_trainMX1s,K);
             ConvNet.W = ConvNet.W - eta*grad_W;
             grad_F1 = reshape(grad_vecF{1}, [d, hyper_paras.k1, hyper_paras.n1]);
             grad_F2 = reshape(grad_vecF{2}, [hyper_paras.n1, hyper_paras.k2, hyper_paras.n2]);
             
             ConvNet.F{1} = ConvNet.F{1} - eta*grad_F1;
             ConvNet.F{2} = ConvNet.F{2} - eta*grad_F2;
+            ConvNet.b{1} = ConvNet.b{1} - eta*grad_b{1};
+            ConvNet.b{2} = ConvNet.b{2} - eta*grad_b{2};
+            ConvNet.b{3} = ConvNet.b{3} - eta*grad_b{3};
         end
         eta = eta*hyper_paras.rho;
         if plot_bool
