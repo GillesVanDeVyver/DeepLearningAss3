@@ -1,6 +1,6 @@
 rng(400);
 
-hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',5,'n_epochs',5);
+hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',3500);
 plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
             ',n2=',string(hyper_paras.n2),...
             ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
@@ -21,10 +21,12 @@ char_to_ind = CreateCharToInd(d,C);
 validationx = reshape(validationX,d*nlen{1},[]);
 ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
 ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,...
-              ConvNet,nlen,d,K, plotTitle,0,MX1s,class_counts,class_starts,...
+              ConvNet,nlen,d,K, plotTitle,1,MX1s,class_counts,class_starts,...
               trainx,trainY,validationx,validationY);
-%confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
-%writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
+final_valid_loss = ComputeLoss(validationx, validationY, ConvNet,nlen);
+final_valid_acc = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
+confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
+writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
 
 
 
