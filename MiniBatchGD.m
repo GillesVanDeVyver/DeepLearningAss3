@@ -1,4 +1,4 @@
-function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy,...
+function ConvNet = MiniBatchGD(trainX,validationX,...
                                hyper_paras,ConvNet,nlen,K, plotTitle,...
                                plot_bool,MX1s,class_counts,class_starts,...
                                trainx,trainY,validationx,validationY)
@@ -14,8 +14,8 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy,...
         plot_info = {loss_train,loss_valid,acc_train,acc_valid};
         plot_info{1}(1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
         plot_info{2}(1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
-        plot_info{3}(1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
-        plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
+        %plot_info{3}(1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+        %plot_info{4}(1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
     else
        plot_info=0; 
     end
@@ -66,26 +66,26 @@ function ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy,...
         if plot_bool
             plot_info{1}(i+1) = ComputeLoss(trainx, trainY, ConvNet,nlen);
             plot_info{2}(i+1) = ComputeLoss(validationx, validationY, ConvNet,nlen);
-            plot_info{3}(i+1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
-            plot_info{4}(i+1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
+            %plot_info{3}(i+1) = ComputeAccuracy(trainx, trainy, ConvNet,nlen);
+            %plot_info{4}(i+1) = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
         end
     end
     if plot_bool
         x_axis = 0:n_epochs;
         figure('Renderer', 'painters', 'Position', [10 10 1500 300])
-        tiledlayout(1,2)
-        nexttile
+        %tiledlayout(1,2)
+        %nexttile
         plot(x_axis,plot_info{1},x_axis,plot_info{2})
         ylim([0 max(plot_info{2})+1])
         xlabel('epoch') 
         ylabel('loss')
         legend({'training loss','validation loss'},'Location','northeast')
-        nexttile
-        plot(x_axis,plot_info{3},x_axis,plot_info{4})
-        ylim([0 max(plot_info{3})+0.2])
-        xlabel('epoch') 
-        ylabel('accuracy')
-        legend({'training accuracy','validation accuracy'},'Location','northeast')
+        %nexttile
+        %plot(x_axis,plot_info{3},x_axis,plot_info{4})
+        %ylim([0 max(plot_info{3})+0.2])
+        %xlabel('epoch') 
+        %ylabel('accuracy')
+        %legend({'training accuracy','validation accuracy'},'Location','northeast')
         sgtitle(plotTitle) 
         saveas(1,strcat(strrep(plotTitle, '.', ','),'.png'))
     end

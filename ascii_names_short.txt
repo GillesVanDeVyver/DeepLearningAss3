@@ -67,6 +67,7 @@ Alden 5
 Alder 5
 Aldersley 5
 Alderson 5
+Sullivan 5
 Cornock 5
 Corr 5
 Corrigan 5
@@ -189,6 +190,7 @@ Dounias 8
 Dritsas 8
 O'Boyle 9
 O'Bree 9
+Sullivan 9
 O'Brian 9
 Acconcio 10
 Accorsi 10

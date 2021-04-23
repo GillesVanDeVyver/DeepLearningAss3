@@ -2,14 +2,13 @@ rng(400);
 
 
 ExtractNames();
-C = unique(cell2mat(all_names));
-d = numel(C);
 
 
-ns=[d,20,20,20,20,20];
-ks=[5,3,3,3,3];
+
+ns=[d,20,20];
+ks=[5,3];
 nb_layers = size(ns,2);
-hyper_paras = struct('ns',ns,'ks',ks,'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',3500);
+hyper_paras = struct('ns',ns,'ks',ks,'eta',0.30556,'rho',0.99913,'n_batch',5,'n_epochs',10);
 plotTitle = strcat('nb_layers=',string(size(ns,2)),',eta=',string(hyper_paras.eta),...
             ',rho=',string(hyper_paras.rho),',n batch=',string(hyper_paras.n_batch),...
             ',n epochs=',string(hyper_paras.n_epochs)) 
@@ -21,19 +20,16 @@ for i=2:nb_layers
     nlen(i)=nlen(i-1) - hyper_paras.ks(i-1) + 1;
 end
 
-K = 18;
-nb_names = size(all_names,2);
-char_to_ind = CreateCharToInd(d,C);
-[trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen(1),d,nb_names,ys);
-
+%nb_names = size(all_names,2);
+%[trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen(1),d,nb_names,ys);
 % pre-compute MX matrices
-[MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY] = Preprocess(K,trainy,trainX,validationX,validationy,hyper_paras,nlen,d);
+[MX1s,class_counts,class_starts,trainx,validationx] = Preprocess(K,trainX,validationX,trainY,hyper_paras,nlen,d);
+
 ConvNet = InitParas(hyper_paras,nlen,K);
-ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,...
-              ConvNet,nlen,K, plotTitle,1,MX1s,class_counts,class_starts,...
+ConvNet = MiniBatchGD(trainX,validationX, hyper_paras,...
+              ConvNet,nlen,K, plotTitle,0,MX1s,class_counts,class_starts,...
               trainx,trainY,validationx,validationY);
 final_valid_loss = ComputeLoss(validationx, validationY, ConvNet,nlen)
-final_valid_acc = ComputeAccuracy(validationx, validationy, ConvNet,nlen)
 %confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
 %writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
 

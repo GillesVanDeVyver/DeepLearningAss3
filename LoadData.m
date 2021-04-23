@@ -1,5 +1,4 @@
-function [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen,d,nb_names,ys)
-    
+function [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen,d,nb_names,ys)    
     fid = fopen('Validation_Inds.txt','r');
     S = fscanf(fid,'%c');
     fclose(fid);
@@ -8,6 +7,7 @@ function [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_in
     trainX=zeros(d,nlen,nb_names-nb_valid_samples);
     validationX=zeros(d,nlen,nb_valid_samples);
     trainy=zeros(nb_names-nb_valid_samples,1);
+    whos trainy
     validationy=zeros(nb_valid_samples,1);
     j=1;
     next_valid=str2double(inds{j});
@@ -25,5 +25,7 @@ function [trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_in
             trainy(i-j+1)=ys(i);
         end
     end
+        whos trainy
+
 
 end
