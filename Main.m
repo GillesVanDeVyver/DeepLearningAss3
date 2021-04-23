@@ -1,41 +1,77 @@
 rng(400);
 
-hyper_paras = struct('n1',20,'k1',5,'n2',20,'k2', 3, 'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',3500);
-plotTitle = strcat('n1=',string(hyper_paras.n1),',k1=',string(hyper_paras.k1),...
-            ',n2=',string(hyper_paras.n2),...
-            ',k2=',string(hyper_paras.k2),',eta=',string(hyper_paras.eta),...
-            ',rho=',string(hyper_paras.rho),',n batch=',string(hyper_paras.n_batch),...
-            ',n epochs=',string(hyper_paras.n_epochs)) 
+
 ExtractNames();
 C = unique(cell2mat(all_names));
 d = numel(C);
-nlen={19,19-hyper_paras.k1+1,0};
-nlen{3} = nlen{2} - hyper_paras.k2 + 1
+
+
+ns=[d,20,20,20,20,20];
+ks=[5,3,3,3,3];
+nb_layers = size(ns,2);
+hyper_paras = struct('ns',ns,'ks',ks,'eta',0.30556,'rho',0.99913,'n_batch',105,'n_epochs',3500);
+plotTitle = strcat('nb_layers=',string(size(ns,2)),',eta=',string(hyper_paras.eta),...
+            ',rho=',string(hyper_paras.rho),',n batch=',string(hyper_paras.n_batch),...
+            ',n epochs=',string(hyper_paras.n_epochs)) 
+
+
+nlen=zeros(nb_layers,1);
+nlen(1)=19;
+for i=2:nb_layers
+    nlen(i)=nlen(i-1) - hyper_paras.ks(i-1) + 1;
+end
+
 K = 18;
 nb_names = size(all_names,2);
 char_to_ind = CreateCharToInd(d,C);
-[trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen{1},d,nb_names,ys);
+[trainX,trainy,validationX,validationy] = LoadData(all_names,char_to_ind,nlen(1),d,nb_names,ys);
 
 % pre-compute MX matrices
 [MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY] = Preprocess(K,trainy,trainX,validationX,validationy,hyper_paras,nlen,d);
-validationx = reshape(validationX,d*nlen{1},[]);
-ConvNet = InitParas(hyper_paras.n1,hyper_paras.k1,hyper_paras.n2,hyper_paras.k2,nlen,d,K);
+ConvNet = InitParas(hyper_paras,nlen,K);
 ConvNet = MiniBatchGD(trainX,trainy,validationX,validationy, hyper_paras,...
-              ConvNet,nlen,d,K, plotTitle,1,MX1s,class_counts,class_starts,...
+              ConvNet,nlen,K, plotTitle,1,MX1s,class_counts,class_starts,...
               trainx,trainY,validationx,validationY);
-final_valid_loss = ComputeLoss(validationx, validationY, ConvNet,nlen);
-final_valid_acc = ComputeAccuracy(validationx, validationy, ConvNet,nlen);
-confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
-writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
+final_valid_loss = ComputeLoss(validationx, validationY, ConvNet,nlen)
+final_valid_acc = ComputeAccuracy(validationx, validationy, ConvNet,nlen)
+%confusion_matrix = createConfMatrix(validationx, validationy, ConvNet,nlen,K)
+%writematrix(confusion_matrix,strcat(strrep(plotTitle, '.', ','),'confMatrix.txt'));
 
 
 
-MFs={MakeMFMatrix(ConvNet.F{1}, nlen{1}),MakeMFMatrix(ConvNet.F{2}, nlen{2})};
+MFs=MakeMFMatrices(ConvNet, nlen);
 names = {'van de vyver','de luca','bogacova','griffin','charlier','karl'};
 %languages: Dutch,Italian,Russian,English,French,German
 for i =1:size(names,2)
     CreateNameResult(names{i},char_to_ind,nlen,d,MFs,ConvNet);
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 %{

@@ -1,5 +1,5 @@
 function CreateNameResult(name,char_to_ind,nlen,d,MFs,ConvNet)
-    name_matrix = ConvertToMatrix(name,char_to_ind,nlen{1},d);
+    name_matrix = ConvertToMatrix(name,char_to_ind,nlen(1),d);
     test_x = name_matrix(:);
     [~,P] = ForwardPass(test_x,MFs,ConvNet);
     labels = ["Arabic","Chinese","Czech","Dutch","English","French","German","Greek","Irish","Italian","Japanese","Korean","Polish","Portuguese","Russian","Scottish","Spanish","Vietnamese"];

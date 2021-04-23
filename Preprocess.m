@@ -17,12 +17,12 @@ function [MX1s,class_counts,class_starts,trainx,trainY,validationx,validationY].
         end
         counter = counter+1;
         xj= trainX(:,:,j);
-        MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.k1,hyper_paras.n1,nlen{1}));
+        MX1s{j}= sparse(MakeMXMatrix(xj,d,hyper_paras.ks(1),hyper_paras.ns(2),nlen(1)));
     end
     class_counts(curr_class)=counter;
     
-    trainx = reshape(trainX,d*nlen{1},[]);
+    trainx = reshape(trainX,d*nlen(1),[]);
     trainY = double(permute(trainy==1:K,[2,1]));
-    validationx = reshape(validationX,d*nlen{1},[]);
+    validationx = reshape(validationX,d*nlen(1),[]);
     validationY = double(permute(validationy==1:K,[2,1]));
 end
